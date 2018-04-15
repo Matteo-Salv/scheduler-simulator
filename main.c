@@ -1,8 +1,20 @@
 #include <stdio.h>
 #include <getopt.h>     //unica libreria per getopt
 #include "Header.h"
+#include
 
 tcb* master(tcb *tasks, const char* input){
+    char *val;
+    FILE *stream;
+    stream= fopen(input, "r");
+
+    if(stream == null){
+        printf("si e' verificato un errore all'apertura del file di input\n");
+        printf("si controlli la correttezza del nome inserito\m");
+        printf("##################CHIUSURA SIMULATORE#####################");
+        exit(1);
+    }
+
     return tasks;
 }
 
