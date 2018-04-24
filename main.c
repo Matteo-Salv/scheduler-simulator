@@ -3,6 +3,24 @@
 #include <stdlib.h>      //per la gestione delle 'exit'
 #include "Header.h"
 
+//metodo per l'inserimento dei tcb in coda
+tcb* insertBackTcb(tcb* tcbs, tcb* tmp_tcb){
+    tmp_tcb->next = tcbs;                           //il successivo del nuovo tcb sarà la testa
+    tmp_tcb->prev = tcbs->prev;                     //il precedente del nuovo tcb sarà il penultimo tcb inserito
+    //successivamente aggiorno i puntatori degli elementi già in lista
+    tcbs->prev->next = tmp_tcb;
+    tcbs->prev = tmp_tcb;
+}
+
+//metodo per l'inserimento di un'istruzione in coda, logica identica a insertBacktcb
+inst* insertBackInst(inst* instructions, inst* tmp_inst){
+    tmp_inst->next = instructions;
+    tmp_inst->prev = instructions->prev;
+    instructions->prev->next = tmp_inst;
+    instructions->prev = tmp_inst;
+    return instructions;
+}
+
 tcb* master(tcb *tasks, const char* input){
     char val;          //variabile dove salvo temporaneamente il carattere letto da file
     FILE *stream;
@@ -64,7 +82,8 @@ tcb* master(tcb *tasks, const char* input){
                 exit(1);
             }
 
-            //alloco la memoria per la prima istruzione del tcb in questione e controllo che vada a buon fine, se è affermativo faccio puntare la prima istruzione a se stessa
+            //alloco la memoria per la prima istruzione del tcb in questione e controllo che vada a buon fine,
+            // se è affermativo faccio puntare la prima istruzione a se stessa
             tmp_tcb->pc = (inst*) malloc (sizeof(inst));
             if(tmp_tcb->pc == NULL){
                 printf("si e' verificato un errore durante la lettura del file di input:\n");
@@ -77,13 +96,43 @@ tcb* master(tcb *tasks, const char* input){
             }
 
             //inizio quindi la lettura delle instruction
-            //devo ricordarmi di aggiornare anche tcb_length
-            //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++DA QUA, DEVO CREARMI I METODI DI GESTIONE DELLA LISTA+++++++++++++++++++++++++++++++++++++++++
+            //################################devo ricordarmi di aggiornare anche tcb_length########################
+            do{
+                inst *tmp_inst = (inst*) malloc (sizeof(inst));
+                if(tmp_inst == NULL){
+                    printf("si e' verificato un errore durante la lettura del file di input:\n");
+                    printf("impossibile allocare la memoria per la lettura delle istruzioni\n");
+                    printf("##################CHIUSURA SIMULATORE##################");
+                    exit(1);
+                }else{
+
+                    //leggo l'istruzione
+                    fscanf(stream,",%d,%d ",&tmp_inst->type_flag,&tmp_inst->length);
+
+                    //aggiorno la lunghezza totale del tcb
+                    tmp_tcb->tcb_length+= tmp_inst->length;
+
+                    //aggiungo l'istruzione in coda alla lista delle istruzioni
+                    tmp_tcb->pc = insertBackInst(tmp_tcb->pc, tmp_inst);
+
+                    //controllo sul file se dopo c'è un task o una instruction
+                    val = fgetc(stream);
+
+                    //se non è t o i stampo un errore ed esco
+                    if (val != 't' && val != 'i'){
+                        printf("errore nella lettura del file! Possibile formattazione errata?\n");
+                        printf("valore atteso: 't' oppure 'i', valore letto: %c\n", &val);
+                        printf("##################CHIUSURA SIMULATORE##################");
+                        exit(1);
+                    }
+                }
+            }while(val=='i');
+
+            //aggiungo il tcb in coda alla lista dei tcb
+            tcb = insertBackTcb(tcb, tmp_tcb);
 
         }while(val == 't');
-
     }
-
     return tasks;
 }
 
