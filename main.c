@@ -53,6 +53,7 @@ tcb* master(tcb *tasks, const char* input){
 
             //leggo quindi il primo task
             fscanf(stream, ",%d,%d", &tmp_tcb->id_task, &tmp_tcb->arr_time);
+            tmp_tcb->tcb_length = 0;
 
             //controllo che il carattere successivo sia una instruction
             fscanf(stream, " %c", &val);
@@ -76,6 +77,7 @@ tcb* master(tcb *tasks, const char* input){
             }
 
             //inizio quindi la lettura delle instruction
+            //devo ricordarmi di aggiornare anche tcb_length
             //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++DA QUA, DEVO CREARMI I METODI DI GESTIONE DELLA LISTA+++++++++++++++++++++++++++++++++++++++++
 
         }while(val == 't');

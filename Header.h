@@ -16,6 +16,7 @@ typedef struct tcb {
     struct tcb* next;              //puntatore al tcb successivo
     struct tcb* prev;              //puntatore al tcb precedente
     int time_blocked;              //se l'istruzione è bloccante, qua specifico per quanto tempo la tcb deve essere bloccata
+    int tcb_length;                //somma della lunghezza delle istruzioni, mi servirà nel caso di ordinamento
 }tcb;
 
 typedef struct arguments{
