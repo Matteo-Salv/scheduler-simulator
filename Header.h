@@ -2,6 +2,8 @@
 #define Header_h
 #include <stdio.h>
 
+//per debuggare: ./simulator -op out_pre.csv -on out_not_pre.csv -i prova_tasks.csv
+
 typedef struct inst {
     int type_flag;
     int length;

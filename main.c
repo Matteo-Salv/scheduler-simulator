@@ -3,6 +3,20 @@
 #include <stdlib.h>      //per la gestione delle 'exit'
 #include "Header.h"
 
+//solo di debug
+void print(tcb* tcbs){
+    tcb* tmp_tcb;
+    tmp_tcb = tcbs->next;
+    printf("%d %d\n", tmp_tcb->id_task, tmp_tcb->arr_time);
+    tmp_tcb = tcbs->next->next;
+    printf("%d %d\n", tmp_tcb->id_task, tmp_tcb->arr_time);
+    tmp_tcb = tcbs->next->next->next;
+    printf("%d %d\n", tmp_tcb->id_task, tmp_tcb->arr_time);
+    tmp_tcb = tcbs->next->next->next->next;
+    printf("%d %d\n", tmp_tcb->id_task, tmp_tcb->arr_time);
+    
+}
+
 //metodo per l'inserimento dei tcb in coda
 tcb* insertBackTcb(tcb* tcbs, tcb* tmp_tcb){
     tmp_tcb->next = tcbs;                           //il successivo del nuovo tcb sarà la testa
@@ -10,6 +24,7 @@ tcb* insertBackTcb(tcb* tcbs, tcb* tmp_tcb){
     //successivamente aggiorno i puntatori degli elementi già in lista
     tcbs->prev->next = tmp_tcb;
     tcbs->prev = tmp_tcb;
+    return tcbs;
 }
 
 //metodo per l'inserimento di un'istruzione in coda, logica identica a insertBacktcb
@@ -129,7 +144,7 @@ tcb* master(tcb *tasks, const char* input){
             }while(val=='i');
 
             //aggiungo il tcb in coda alla lista dei tcb
-            tcb = insertBackTcb(tcb, tmp_tcb);
+            tasks = insertBackTcb(tasks, tmp_tcb);
 
         }while(val == 't');
     }
@@ -222,6 +237,9 @@ int main(int argc, const char * argv[]) {
 
     //funzione del master, faccio il parsing di tutti i task e istruzioni
     tcbs = master(tcbs, file_in);
+    
+    //solo di debug
+    print(tcbs);
 
     printf("##################SIMULATORE TERMINATO CON SUCCESSO#####################\n");
 }
