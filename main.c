@@ -8,12 +8,9 @@ void print(tcb* tcbs){
     tcb* tmp_tcb;
     inst* tmp_inst;
     tmp_tcb = tcbs->next;
-//    tmp_inst = tmp_tcb->pc->next;
     printf("prev: %d %d\n", tcbs->prev->id_task, tcbs->prev->arr_time);
     while(tmp_tcb != tcbs){
         printf("%d %d\n", tmp_tcb->id_task, tmp_tcb->arr_time);
-//        printf("%d %d\n", tmp_tcb->pc->next->type_flag, tmp_tcb->pc->next->length);
-//        printf("%d %d\n", tmp_tcb->pc->prev->type_flag, tmp_tcb->pc->prev->length);
         tmp_inst = tmp_tcb->pc->next;
         while(tmp_inst != tmp_tcb->pc){
             printf("%d %d\n", tmp_inst->type_flag, tmp_inst->length);
