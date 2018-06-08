@@ -6,15 +6,21 @@
 //solo di debug
 void print(tcb* tcbs){
     tcb* tmp_tcb;
+    inst* tmp_inst;
     tmp_tcb = tcbs->next;
-    printf("%d %d\n", tmp_tcb->id_task, tmp_tcb->arr_time);
-    tmp_tcb = tcbs->next->next;
-    printf("%d %d\n", tmp_tcb->id_task, tmp_tcb->arr_time);
-    tmp_tcb = tcbs->next->next->next;
-    printf("%d %d\n", tmp_tcb->id_task, tmp_tcb->arr_time);
-    tmp_tcb = tcbs->next->next->next->next;
-    printf("%d %d\n", tmp_tcb->id_task, tmp_tcb->arr_time);
-    
+//    tmp_inst = tmp_tcb->pc->next;
+    printf("prev: %d %d\n", tcbs->prev->id_task, tcbs->prev->arr_time);
+    while(tmp_tcb != tcbs){
+        printf("%d %d\n", tmp_tcb->id_task, tmp_tcb->arr_time);
+//        printf("%d %d\n", tmp_tcb->pc->next->type_flag, tmp_tcb->pc->next->length);
+//        printf("%d %d\n", tmp_tcb->pc->prev->type_flag, tmp_tcb->pc->prev->length);
+        tmp_inst = tmp_tcb->pc->next;
+        while(tmp_inst != tmp_tcb->pc){
+            printf("%d %d\n", tmp_inst->type_flag, tmp_inst->length);
+            tmp_inst = tmp_inst->next;
+        }
+        tmp_tcb = tmp_tcb->next;
+    }
 }
 
 //metodo per l'inserimento dei tcb in coda
@@ -134,9 +140,11 @@ tcb* master(tcb *tasks, const char* input){
                     val = fgetc(stream);
 
                     //se non è t o i stampo un errore ed esco
-                    if (val != 't' && val != 'i'){
+                    if (val != 't' && val != 'i' && val != EOF){
                         printf("errore nella lettura del file! Possibile formattazione errata?\n");
                         printf("valore atteso: 't' oppure 'i', valore letto: %c\n", &val);
+//                        printf("ultima istruzione letta: %d %d\n", tmp_inst->type_flag, tmp_inst->length);
+//                        printf("ultimo task letto: %d %d\n", tmp_tcb->id_task, tmp_tcb->arr_time);
                         printf("##################CHIUSURA SIMULATORE##################");
                         exit(1);
                     }
