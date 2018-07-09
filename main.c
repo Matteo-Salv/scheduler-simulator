@@ -264,11 +264,11 @@ int main(int argc, const char * argv[]) {
         pthread_mutex_init(&no_pree.mux_tcbs, NULL);
         pthread_mutex_init(&no_pree.mux_file, NULL);
 
-        if(pthread.create(&core0, NULL, scheduler_no_pree, &no_pree) != 0){
+        if(pthread_create(&core0, NULL, scheduler_no_pree, &no_pree) != 0){
             perror("error during the creation of pthread 0!");
         }
 
-        if(pthread.create(&core1, NULL, scheduler_no_pree, &no_pree) != 0 ){
+        if(pthread_create(&core1, NULL, scheduler_no_pree, &no_pree) != 0 ){
             perror("error during the creation of pthread 1!");
         }
 
