@@ -37,7 +37,7 @@ typedef struct arg_no_pree{
     bool n_core;
     pthread_mutex_t mux_tcbs;
     pthread_mutex_t mux_file;
-};
+}arg_no_pree;
 
 typedef struct arg_pree{
     char* out_pree;
@@ -46,7 +46,7 @@ typedef struct arg_pree{
     pthread_mutex_t mux_tcbs;
     pthread_mutex_t mux_file;
     int quantum;
-};
+}arg_pree;
 
 typedef struct arguments{
     char* out_pree;
