@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <getopt.h>     //unica libreria per getopt
 #include <stdlib.h>      //per la gestione delle 'exit'
+#include <pthread.h>
+#include <stdbool.h>
 #include "Header.h"
 
 //solo di debug
-void print(tcb* tcbs){
+/*void print(tcb* tcbs){
     tcb* tmp_tcb;
     inst* tmp_inst;
     tmp_tcb = tcbs->next;
@@ -18,7 +20,7 @@ void print(tcb* tcbs){
         }
         tmp_tcb = tmp_tcb->next;
     }
-}
+}*/
 
 //metodo per l'inserimento dei tcb in coda
 tcb* insertBackTcb(tcb* tcbs, tcb* tmp_tcb){
@@ -179,6 +181,10 @@ int main(int argc, const char * argv[]) {
     arguments arg_sched;                //salvo tutti gli argomenti letti in input
     tcb *tcbs = NULL;                   //lista di tutti i tcb
 
+    //per i thread
+    pid_t pree, no_pree;
+    int status_pree, status_nopree;
+
     //short e long options:
     const char* const short_options = "op: on: i: h";
     const struct option long_options[] = {
@@ -242,11 +248,72 @@ int main(int argc, const char * argv[]) {
 
     //funzione del master, faccio il parsing di tutti i task e istruzioni
     tcbs = master(tcbs, file_in);
+
+    //fork del non preemptive
+    no_pree = fork();
+    if(no_pree < 0){
+        perror("Forking dello scheduler non preemptive fallito!");
+        return(1);
+    }else if(no_pree == 0){
+        pthread_t core0, core1;
+        arg_no_pree no_pree;
+
+        no_pree.out_no_pree = arg_sched.out_no_pree;
+        no_pree.tcbs = tcbs;
+        no_pree.n_core = false;
+        pthread_mutex_init(&no_pree.mux_tcbs, NULL);
+        pthread_mutex_init(&no_pree.mux_file, NULL);
+
+        if(pthread.create(&core0, NULL, scheduler_no_pree, &no_pree) != 0){
+            perror("error during the creation of pthread 0!");
+        }
+
+        if(pthread.create(&core1, NULL, scheduler_no_pree, &no_pree) != 0 ){
+            perror("error during the creation of pthread 1!");
+        }
+
+        pthread_join(core0, NULL);
+        pthread_join(core1, NULL);
+    }else{
+        wait(&status_nopree);
+    }
+
+    //fork del preemptive
+    pree = fork();
+    if(pree < 0){
+        perror("Forking dello scheduler preemptive fallito!");
+        return(1);
+    }else if(pree == 0){
+        pthread_t core2, core3;
+        arg_pree pree;
+
+        pree.out_pree = arg_sched.out_pree;
+        pree.tcbs = tcbs;
+        pree.n_core = false;
+        pree.quantum = quantum;             //il quanto di tempo non viene chiesto, ma è sempre prefissato a priori;
+        pthread_mutex_init(&pree.mux_tcbs, NULL);
+        pthread_mutex_init(&pree.mux_file, NULL);
+
+        if(pthread_create(&core2, NULL, scheduler_pree, &pree) != 0){
+            perror("error during the creation of pthread 2!");
+        }
+
+        if(pthread_create(&core3, NULL, scheduler_pree, &pree) != 0){
+            perror("error during the creation of pthread 3!");
+        }
+
+        pthread_join(core2, NULL);
+        pthread_join(core3, NULL);
+
+    }
+
+
     
     //solo di debug
-    print(tcbs);
+//    print(tcbs);
 
     printf("##################SIMULATORE TERMINATO CON SUCCESSO#####################\n");
+    return 0;
 }
 
 

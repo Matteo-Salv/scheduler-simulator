@@ -9,10 +9,13 @@ CFILES := $(wildcard *.c)
 OBJECTS := $(wildcard *.o)
 
 
-all: libcalc $(PROJECT)
+all: libsched libfunct $(PROJECT)
 
-libcalc: scheduler.c Header.h
+libsched: scheduler.c Header.h
 	$(CC) -c $(CFLAGS) $<
+
+libfunct: Functions.c Header.h
+    $(CC) -c $(CFLAGS) $<
 
 $(PROJECT): main.c
 	$(CC) -c $(CFLAGS) $<
