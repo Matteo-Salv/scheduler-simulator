@@ -2,7 +2,7 @@ PROJECT := simulator
 CC = gcc
 CFLAGS = -Wall -pedantic
 DEBUG = -ggdb3 -D DEBUG
-LDFLAGS = -lpthread
+LDFLAGS = -pthread
 
 HEADERS := $(wildcard *.h)
 CFILES := $(wildcard *.c)
@@ -15,7 +15,7 @@ libsched: scheduler.c Header.h
 	$(CC) -c $(CFLAGS) $<
 
 libfunct: Functions.c Header.h
-    $(CC) -c $(CFLAGS) $<
+	$(CC) -c $(CFLAGS) $<
 
 $(PROJECT): main.c
 	$(CC) -c $(CFLAGS) $<
