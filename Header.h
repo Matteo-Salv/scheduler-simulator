@@ -28,6 +28,7 @@ typedef struct tcb {
     struct tcb* prev;              //puntatore al tcb precedente
     int time_blocked;              //se l'istruzione è bloccante, qua specifico per quanto tempo la tcb deve essere bloccata
     int tcb_length;                //somma della lunghezza delle istruzioni, mi servirà nel caso di ordinamento
+    int state;                     //intero in cui salvo lo stato del tcb (vedere in fondo all'header)
 }tcb;
 
 typedef struct arg_no_pree{
@@ -52,11 +53,24 @@ typedef struct arguments{
     char* out_no_pree;
 }arguments;
 
-//funzioni
+//funzioni di scheduler.c
 void* scheduler_no_pree(void *params_no_pree);
 void* scheduler_pree(void* params_pree);
 
 //funzioni di functions.c
+tcb* remove_top_tcb(tcb* top);
+tcb* add_ready(tcb* top, tcb* new_tcb);
+void print(FILE *fp, int clock, int core, int id, int stato, pthread_mutex_t* mux);
+
+//funzioni nel main
+tcb* insertBackTcb(tcb* tcbs, tcb* tmp_tcb);
 
 
 #endif
+/*STATO:
+ * 0 = new;
+ * 1 = ready;
+ * 2 = running;
+ * 3 = blocked;
+ * 4 = exit;
+*/

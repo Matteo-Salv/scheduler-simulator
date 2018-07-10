@@ -226,7 +226,6 @@ int main(int argc, const char * argv[]) {
                 print_help();
                 printf("chiusura del programma...\n");
                 return 0;
-                break;
             case '?':
                 print_help();
                 return 0;
