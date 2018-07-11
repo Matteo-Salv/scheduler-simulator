@@ -5,7 +5,7 @@ void* scheduler_no_pree(void *params_no_pree){
     int core;
     int clock = 0;
     int flag;
-    arg_no_pree* args = params_no_pree;
+    arg_no_pree* args = (arg_no_pree*) params_no_pree;
     FILE *fp;
 
     //dove salvo il tcb in run
@@ -13,12 +13,12 @@ void* scheduler_no_pree(void *params_no_pree){
 
     //preparo la lista dei ready
     tcb* ready = (tcb*) malloc (sizeof(tcb));
-    ready->pc = ready;
+    ready->next = ready;
     ready->prev = ready;
 
     //preparo la lista dei blocked
     tcb* blocked = (tcb*) malloc (sizeof(tcb));
-    blocked->pc = blocked;
+    blocked->next = blocked;
     blocked->prev = blocked;
 
     //apertura in scrittura del file di output
@@ -27,6 +27,7 @@ void* scheduler_no_pree(void *params_no_pree){
     //funzione per identificare il core
     if(!args->n_core){
         core = 0;
+        args->n_core = true;
     }else{
         core = 1;
     }
@@ -34,6 +35,7 @@ void* scheduler_no_pree(void *params_no_pree){
     //se la lista dei tcb è vuota termino il thread
     pthread_mutex_lock(&args->mux_tcbs);
     if(args->tcbs == args->tcbs->next){
+        printf("#########ESCO DAll'INIZIO DI NON PREEMPTIVE");
         pthread_exit(NULL);
     }
     pthread_mutex_unlock(&args->mux_tcbs);
@@ -52,13 +54,14 @@ void* scheduler_no_pree(void *params_no_pree){
             print(fp, clock, core, new_tmp->id_task, new_tmp->state, &(args->mux_file));
         }
     }while(ready->next == ready);
-    pthread_mutex_unlock(&args->mux_file);
+    pthread_mutex_unlock(&args->mux_tcbs);
 
     //inizio col primo processo
     do{
         run = ready->next;
-        run->state = 2;
+        run->state = 2;                 //run
         print(fp, clock, core, run->id_task, run->state, &(args->mux_file));
+        printf("tcb %d %d\n", run->id_task, run->arr_time);
 
         //lo rimuovo dalla lista dei ready;
         ready = remove_top_tcb(ready);
@@ -67,6 +70,7 @@ void* scheduler_no_pree(void *params_no_pree){
         do{
             //se l'istruzione è bloccante
             if(run->pc->next->type_flag == 1){
+                printf("istruzione bloccante\n");
                 //calcolo il tempo di blocco, aggiorno lo stato e scrivo su file
                 run->pc->next->lock_time = (rand() % run->pc->next->length)+1;
                 run->state = 3;             //blocked
@@ -78,29 +82,32 @@ void* scheduler_no_pree(void *params_no_pree){
 
             //altrimenti se l'istruzione non è bloccante
             }else{
+                printf("istruzione non bloccante\n");
                 flag = 0;
                 clock += run->pc->next->length;
 
                 //se ci sono ancora istruzioni in ready
                 pthread_mutex_lock(&args->mux_tcbs);
                 if(args->tcbs != args->tcbs->next){
+                    printf("sono presenti istruzioni in ready\n");
                     arrival_time(fp, ready, args->tcbs, clock, core, &(args->mux_file));
                 }
                 pthread_mutex_unlock(&args->mux_tcbs);
 
                 //se sono presenti istruzioni bloccate
                 if(blocked->next != blocked){
+                   printf("sono presenti istruzioni bloccate\n");
                     isBlocked(fp, blocked, ready, run->pc->next->length, clock, core, &(args->mux_file));
                 }
 
                 run->pc = remove_top_inst(run->pc);
+
                 //se ho finito tutte le istruzioni in run
                 if(run->pc->next == run->pc){
+                    printf("ho finito tutte le istruzioni in run");
                     run->state = 4;
                     print(fp, clock, core, run->id_task, run->state, &(args->mux_file));
                 }
-
-
             }
         }while(flag == 0 && run->pc->next != run->pc);      //finchè sono presenti istruzioni non bloccanti
 
@@ -114,8 +121,10 @@ void* scheduler_no_pree(void *params_no_pree){
                 isTrue = true;
             }
             pthread_mutex_unlock(&args->mux_tcbs);
+
             if(blocked == blocked->next && isTrue){
-                sleep(5);
+//                sleep(5);
+                printf("#######TERMINO NON DAL FONDO DEL NON PREEMPTIVE##########");
                 pthread_exit(NULL);
             }
 
@@ -127,6 +136,7 @@ void* scheduler_no_pree(void *params_no_pree){
             if(args->tcbs != args->tcbs->next){
                 arrival_time(fp, ready, args->tcbs, clock, core, &(args->mux_file));
             }
+            pthread_mutex_unlock(&args->mux_tcbs);
 
             //controllo i blocked
             if(blocked != blocked->next){
@@ -138,6 +148,7 @@ void* scheduler_no_pree(void *params_no_pree){
 
     }while(ready != ready->next);       //finchè sono presenti tcb da mettere in run;
 
+    printf("###########HO TERMINATO LO SCHEDULER NON PREEMPTIVE############# core%d\n", core);
     return NULL;
 }
 

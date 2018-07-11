@@ -14,12 +14,13 @@ tcb* add_ready(tcb* top, tcb* new_tcb){
     //se la lista non è vuota
     if(top->next != top){
         top = insertBackTcb(top, new_tcb);
-    }else{
+    }else if(top->next == top){
         top->next = new_tcb;
         top->prev = new_tcb;
         new_tcb->next = top;
         new_tcb->prev = top;
     }
+    return top;
 }
 
 //per la stampa sul file
@@ -62,6 +63,7 @@ void arrival_time(FILE* fp, tcb* ready, tcb* tcbs, int clock, int core, pthread_
         //aggiungo quindi il nuovo tcb nella lista dei ready e scrivo su file
         ready = add_ready(ready, new_tcb);
         print(fp, clock, core, new_tcb->id_task, new_tcb->state, mux);
+//        printf("sono bloccato dentro arrival time\n");
     }
     new_tcb = NULL;
 }
@@ -74,6 +76,7 @@ void isBlocked(FILE* fp, tcb* blocked, tcb* ready, int length, int clock, int co
     do{
         blocked_tcb->pc->next->lock_time -= length;
         blocked_tcb = blocked_tcb->next;
+//        printf("sono bloccato dentro isBlocked core%d\n", core);
     }while(blocked != blocked_tcb);
 
     //successivamente finchè il primo si sblocca
@@ -87,7 +90,8 @@ void isBlocked(FILE* fp, tcb* blocked, tcb* ready, int length, int clock, int co
         ready = add_ready(ready, tmp_tcb);
         print(fp, clock, core, tmp_tcb->id_task, tmp_tcb->state, mux);
     }
-    blocked_tcb = NULL;
+    //blocked_tcb = NULL;
+//    printf("ho terminato isBlocked core%d\n", core);
 }
 
 //rimozione dell'istruzione in testa

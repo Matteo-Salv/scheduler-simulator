@@ -1,5 +1,6 @@
 #ifndef Header_h
 #define Header_h
+#include <getopt.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdbool.h>

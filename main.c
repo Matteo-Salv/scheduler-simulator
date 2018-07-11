@@ -3,10 +3,12 @@
 #include <stdlib.h>      //per la gestione delle 'exit'
 #include <pthread.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include "Header.h"
 
 //solo di debug
-/*void print(tcb* tcbs){
+/*
+void printdebug(tcb* tcbs){
     tcb* tmp_tcb;
     inst* tmp_inst;
     tmp_tcb = tcbs->next;
@@ -177,12 +179,13 @@ int main(int argc, const char * argv[]) {
     int check = 0;                      //per il controllo del numero di paramentri inseriti
     int next_option = 0;                //variabile utilizzata nello switch del getopt
     int quantum = 10;                   //variabile per il quanto di tempo del round robin, non lo chiedo come parametro ma di default è 10
-    int help = 0;                       //0= false, ovvero l'utente non ha usato -h; 1=true
+    bool help = false;                       //0= false, ovvero l'utente non ha usato -h; 1=true
     arguments arg_sched;                //salvo tutti gli argomenti letti in input
     tcb *tcbs = NULL;                   //lista di tutti i tcb
 
     //per i thread
-    pid_t pree, no_pree;
+    pid_t pree;
+    pid_t no_pree;
     int status_pree, status_nopree;
 
     //short e long options:
@@ -222,7 +225,7 @@ int main(int argc, const char * argv[]) {
                 file_in = optarg;
                 break;
             case 'h':
-                help = 1;
+                help = true;
                 print_help();
                 printf("chiusura del programma...\n");
                 return 0;
@@ -238,7 +241,7 @@ int main(int argc, const char * argv[]) {
     }while(next_option!=-1);
 
     //controllo se sono stati inseriti tutti i parametri, check = 5 solo se ci sono tutti (3 argomenti + due volte -o)
-    if(check!=5 && help==0){
+    if(check!=5 && !help){
         printf("\nparametri inseriti non sufficienti, seguire le istruzioni:\n");
         print_help();
         printf("chiusura del programma...\n");
@@ -250,11 +253,11 @@ int main(int argc, const char * argv[]) {
 
     //fork del non preemptive
     no_pree = fork();
+
     if(no_pree < 0){
         perror("Forking dello scheduler non preemptive fallito!");
-        return(1);
+        exit(1);
     }else if(no_pree == 0){
-        pthread_t core0, core1;
         arg_no_pree no_pree;
 
         no_pree.out_no_pree = arg_sched.out_no_pree;
@@ -263,53 +266,56 @@ int main(int argc, const char * argv[]) {
         pthread_mutex_init(&no_pree.mux_tcbs, NULL);
         pthread_mutex_init(&no_pree.mux_file, NULL);
 
+        pthread_t core0;
+        pthread_t core1;
         if(pthread_create(&core0, NULL, scheduler_no_pree, &no_pree) != 0){
             perror("error during the creation of pthread 0!");
         }
 
+        /*
         if(pthread_create(&core1, NULL, scheduler_no_pree, &no_pree) != 0 ){
             perror("error during the creation of pthread 1!");
-        }
+        }*/
 
         pthread_join(core0, NULL);
-        pthread_join(core1, NULL);
+//        pthread_join(core1, NULL);
     }else{
         wait(&status_nopree);
-    }
 
-    //fork del preemptive
-    pree = fork();
-    if(pree < 0){
-        perror("Forking dello scheduler preemptive fallito!");
-        return(1);
-    }else if(pree == 0){
-        pthread_t core2, core3;
-        arg_pree pree;
+        //fork del preemptive
+        pree = fork();
+        if(pree < 0){
+            perror("Forking dello scheduler preemptive fallito!");
+            return(1);
+        }else if(pree == 0){
+            pthread_t core2, core3;
+            arg_pree pree;
 
-        pree.out_pree = arg_sched.out_pree;
-        pree.tcbs = tcbs;
-        pree.n_core = false;
-        pree.quantum = quantum;             //il quanto di tempo non viene chiesto, ma è sempre prefissato a priori;
-        pthread_mutex_init(&pree.mux_tcbs, NULL);
-        pthread_mutex_init(&pree.mux_file, NULL);
+            pree.out_pree = arg_sched.out_pree;
+            pree.tcbs = tcbs;
+            pree.n_core = false;
+            pree.quantum = quantum;             //il quanto di tempo non viene chiesto, ma è sempre prefissato a priori;
+            pthread_mutex_init(&pree.mux_tcbs, NULL);
+            pthread_mutex_init(&pree.mux_file, NULL);
 
-        if(pthread_create(&core2, NULL, scheduler_pree, &pree) != 0){
-            perror("error during the creation of pthread 2!");
+            if(pthread_create(&core2, NULL, scheduler_pree, &pree) != 0){
+                perror("error during the creation of pthread 2!");
+            }
+
+            if(pthread_create(&core3, NULL, scheduler_pree, &pree) != 0){
+                perror("error during the creation of pthread 3!");
+            }
+
+            pthread_join(core2, NULL);
+            pthread_join(core3, NULL);
+        }else{
+            wait(&status_pree);
         }
-
-        if(pthread_create(&core3, NULL, scheduler_pree, &pree) != 0){
-            perror("error during the creation of pthread 3!");
-        }
-
-        pthread_join(core2, NULL);
-        pthread_join(core3, NULL);
-
     }
-
 
     
     //solo di debug
-//    print(tcbs);
+//    printdebug(tcbs);
 
     printf("##################SIMULATORE TERMINATO CON SUCCESSO#####################\n");
     return 0;
