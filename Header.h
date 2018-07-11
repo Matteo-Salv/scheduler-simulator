@@ -16,6 +16,7 @@
 typedef struct inst {
     int type_flag;
     int length;
+    int lock_time;
     struct inst* next;      //istruzione successiva
     struct inst* prev;      //istruzione precedente
 }inst;
@@ -61,6 +62,9 @@ void* scheduler_pree(void* params_pree);
 tcb* remove_top_tcb(tcb* top);
 tcb* add_ready(tcb* top, tcb* new_tcb);
 void print(FILE *fp, int clock, int core, int id, int stato, pthread_mutex_t* mux);
+void arrival_time(FILE* fp, tcb* ready, tcb* tcbs, int clock, int core, pthread_mutex_t* mux);
+void isBlocked(FILE* fp, tcb* blocked, tcb* ready, int length, int clock, int core, pthread_mutex_t* mux);
+inst* remove_top_inst(inst* top);
 
 //funzioni nel main
 tcb* insertBackTcb(tcb* tcbs, tcb* tmp_tcb);
