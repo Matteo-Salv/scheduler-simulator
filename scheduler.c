@@ -35,7 +35,6 @@ void* scheduler_no_pree(void *params_no_pree){
     //se la lista dei tcb è vuota termino il thread
     pthread_mutex_lock(&args->mux_tcbs);
     if(args->tcbs == args->tcbs->next){
-        printf("#########ESCO DAll'INIZIO DI NON PREEMPTIVE");
         pthread_exit(NULL);
     }
     pthread_mutex_unlock(&args->mux_tcbs);
@@ -61,7 +60,7 @@ void* scheduler_no_pree(void *params_no_pree){
         run = ready->next;
         run->state = 2;                 //run
         print(fp, clock, core, run->id_task, run->state, &(args->mux_file));
-        printf("tcb %d %d, clock %d\n", run->id_task, run->arr_time, clock);
+
 
         //lo rimuovo dalla lista dei ready;
         ready = remove_top_tcb(ready);
@@ -75,7 +74,6 @@ void* scheduler_no_pree(void *params_no_pree){
                 run->pc->next->lock_time = (rand() % run->pc->next->length)+1;
                 run->state = 3;             //blocked
                 print(fp,clock,core,run->id_task, run->state, &(args->mux_file));
-                printf("istruzione bloccante, tempo di blocco: %d, clock attuale: %d\n", run->pc->next->lock_time, clock);
 
                 blocked = add_ready(blocked, run);
 
@@ -83,21 +81,18 @@ void* scheduler_no_pree(void *params_no_pree){
 
             //altrimenti se l'istruzione non è bloccante
             }else{
-                printf("istruzione non bloccante\n");
                 flag = 0;
                 clock += run->pc->next->length;
 
                 //se ci sono ancora istruzioni in ready
                 pthread_mutex_lock(&args->mux_tcbs);
                 if(args->tcbs != args->tcbs->next){
-                    printf("sono presenti istruzioni in ready\n");
                     arrival_time(fp, ready, args->tcbs, clock, core, &(args->mux_file));
                 }
                 pthread_mutex_unlock(&args->mux_tcbs);
 
                 //se sono presenti istruzioni bloccate
                 if(blocked->next != blocked){
-                   printf("sono presenti istruzioni bloccate\n");
                     isBlocked(fp, blocked, ready, run->pc->next->length, clock, core, &(args->mux_file));
                 }
 
@@ -105,7 +100,6 @@ void* scheduler_no_pree(void *params_no_pree){
 
                 //se ho finito tutte le istruzioni in run
                 if(run->pc->next == run->pc){
-                    printf("ho finito tutte le istruzioni in run");
                     run->state = 4;
                     print(fp, clock, core, run->id_task, run->state, &(args->mux_file));
                 }
@@ -124,8 +118,6 @@ void* scheduler_no_pree(void *params_no_pree){
             pthread_mutex_unlock(&args->mux_tcbs);
 
             if(blocked == blocked->next && isTrue){
-//                sleep(5);
-                printf("#######TERMINO NON DAL FONDO DEL NON PREEMPTIVE##########");
                 pthread_exit(NULL);
             }
 
@@ -149,16 +141,15 @@ void* scheduler_no_pree(void *params_no_pree){
 
     }while(ready != ready->next);       //finchè sono presenti tcb da mettere in run;
 
-    printf("###########HO TERMINATO LO SCHEDULER NON PREEMPTIVE############# core%d\n", core);
     return NULL;
 }
 
 void* scheduler_pree(void* params_pree){
+
     arg_pree* args = (arg_pree*) params_pree;
     int core;
     int clock = 0;
     int flag;
-    int quantum = args->quantum;
 
     //creo la lista dei ready
     tcb* ready = (tcb*) malloc(sizeof(tcb));
@@ -172,15 +163,15 @@ void* scheduler_pree(void* params_pree){
 
     //imposto il core
     if(!args->n_core){
-        core = 0;
+        core = 2;
         args->n_core = true;
     }
     else
-        core = 1;
+        core = 3;
 
     tcb *run = NULL;
 
-    file* fp = fopen(args->out_pree,"w");
+    FILE* fp = fopen(args->out_pree,"w");
 
     //se la lista dei tcb è vuota termino
     pthread_mutex_lock(&args->mux_tcbs);
@@ -198,18 +189,19 @@ void* scheduler_pree(void* params_pree){
 
             args->tcbs = remove_top_tcb(args->tcbs);
 
-            ready = add_ready();
-            print(fp, clock, core, new_tcb->id_task, new_tcb->state, &(args->mux_file));
-        }while(ready == ready->next);
-        pthread_mutex_unlock(&args->mux_tcbs);
+            ready = add_ready(ready,new_tcb);
+            print(fp,clock,core,new_tcb->id_task,new_tcb->state,&(args->mux_file));
+        }
     }while(ready == ready->next);
+    pthread_mutex_unlock(&args->mux_tcbs);
 
     do{
+        int quantum = args->quantum;
         run = ready->next;
-        run->state = 1;
+        run->state = 2;                 //running
         ready = remove_top_tcb(ready);
 
-        print(fp,clock,core,run->id,run->state, &(args->mux_file));
+        print(fp,clock,core,run->id_task,run->state, &(args->mux_file));
 
         do{
             if(run->pc->next->type_flag == 1){
@@ -219,9 +211,101 @@ void* scheduler_pree(void* params_pree){
                 blocked = add_ready(blocked, run);
                 print(fp,clock,core,run->id_task,run->state,&(args->mux_file));
             }else if(run->pc->next->type_flag == 0){
-                //istruzione non bloccante
+
+                //caso in cui l'istruzione è più lunga del quanto
+                if(run->pc->next->length > quantum){
+
+                    clock+= quantum;
+                    flag = 1;
+                    run->pc->next->length -= quantum;
+
+                    pthread_mutex_lock(&args->mux_tcbs);
+                    if(args->tcbs->next != args->tcbs){
+                        arrival_time(fp,ready,args->tcbs,clock,core,&(args->mux_file));
+                    }
+                    pthread_mutex_unlock(&args->mux_tcbs);
+
+                    if(blocked != blocked->next){
+                        isBlocked(fp,blocked,ready,quantum,clock,core,&(args->mux_file));
+                    }
+
+                    run->state = 1;         //ready
+                    ready = add_ready(ready,run);
+
+                    print(fp, clock,core,run->id_task,run->state,&(args->mux_file));
+
+                //caso in cui l'istruzione è più corta del quanto
+                }else if(run->pc->next->length < quantum){
+                    flag = 0;
+                    quantum -= run->pc->next->length;
+                    clock += run->pc->next->length;
+
+                    pthread_mutex_lock(&args->mux_tcbs);
+                    if(args->tcbs->next != args->tcbs){
+                        arrival_time(fp,ready,args->tcbs,clock,core,&(args->mux_file));
+                    }
+                    pthread_mutex_unlock(&args->mux_tcbs);
+
+                    if(blocked != blocked->next){
+                        isBlocked(fp,blocked,ready,run->pc->next->length, clock,core,&(args->mux_file));
+                    }
+
+                    run->pc = remove_top_inst(run->pc);
+                    if(run->pc->next == run->pc){
+                        run->state = 4;             //exit
+                        print(fp,clock,core,run->id_task,run->state,&(args->mux_file));
+                    }
+
+                //se invece il quanto è uguale alla durata dell'istruzione
+                }else{
+                    flag = 1;
+                    clock+= run->pc->next->length;
+
+                    pthread_mutex_lock(&args->mux_tcbs);
+                    if(args->tcbs->next != args->tcbs){
+                        arrival_time(fp,ready,args->tcbs,clock,core,&(args->mux_file));
+                    }
+                    pthread_mutex_unlock(&args->mux_tcbs);
+
+                    if(blocked != blocked->next){
+                        isBlocked(fp,blocked,ready,run->pc->next->length,clock,core,&(args->mux_file));
+                    }
+
+                    if(run->pc == run->pc->next){
+                        run->state = 4;         //exit;
+                        print(fp,clock,core,run->id_task,run->state,&(args->mux_file));
+                    }else{
+                        run->state = 1;          //ready
+                        ready = add_ready(ready,run);
+                        print(fp,clock,core,run->id_task,run->state,&(args->mux_file));
+                    }
+                }
             }
         }while(flag == 0 && run->pc != run->pc->next);
+
+        while(ready == ready->next){
+            pthread_mutex_lock(&args->mux_tcbs);
+            bool isTrue = false;
+            if(args->tcbs == args->tcbs->next){
+                isTrue = true;
+            }
+            pthread_mutex_unlock(&args->mux_tcbs);
+
+            if(blocked == blocked->next && isTrue){
+                pthread_exit(NULL);
+            }
+            clock++;
+
+            pthread_mutex_lock(&args->mux_tcbs);
+            if(args->tcbs != args->tcbs->next){
+                arrival_time(fp,ready,args->tcbs,clock,core,&(args->mux_file));
+            }
+            pthread_mutex_unlock(&args->mux_tcbs);
+
+            if(blocked != blocked->next){
+                isBlocked(fp,blocked,ready,1,clock,core,&(args->mux_file));
+            }
+        }
 
     }while(ready != ready->next);
 

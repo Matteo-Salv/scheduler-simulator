@@ -63,7 +63,6 @@ void arrival_time(FILE* fp, tcb* ready, tcb* tcbs, int clock, int core, pthread_
         //aggiungo quindi il nuovo tcb nella lista dei ready e scrivo su file
         ready = add_ready(ready, new_tcb);
         print(fp, clock, core, new_tcb->id_task, new_tcb->state, mux);
-//        printf("sono bloccato dentro arrival time\n");
     }
     new_tcb = NULL;
 }
@@ -72,26 +71,24 @@ void arrival_time(FILE* fp, tcb* ready, tcb* tcbs, int clock, int core, pthread_
 void isBlocked(FILE* fp, tcb* blocked, tcb* ready, int length, int clock, int core, pthread_mutex_t* mux){
     tcb* blocked_tcb = blocked->next;
 
-    //per prima cosa decremento tutti i bloccati
+    //decremento tutti i bloccati
     do{
         blocked_tcb->pc->next->lock_time -= length;
         blocked_tcb = blocked_tcb->next;
-//        printf("sono bloccato dentro isBlocked core%d\n", core);
     }while(blocked != blocked_tcb);
 
-    //successivamente finchè il primo si sblocca
-    while(blocked->next->pc->next->lock_time < 1 && blocked->next != blocked){
-        blocked->next->pc->next->type_flag = 0;             //sblocco l'istruzione
-        tcb* tmp_tcb = blocked->next;
-        tmp_tcb->state = 1;                                  //ready
-        blocked = remove_top_tcb(blocked);
+    //finchè il primo non si sblocca
+    while(blocked->next != blocked && blocked->next->pc->next->lock_time < 1){
+        blocked->next->pc->next->type_flag = 0;
 
-        //aggiungo quindi il nuovo tcb nella lista dei ready e scrivo su file
-        ready = add_ready(ready, tmp_tcb);
-        print(fp, clock, core, tmp_tcb->id_task, tmp_tcb->state, mux);
+        tcb* tmp = blocked->next;
+        blocked = remove_top_tcb(blocked);
+        tmp->state = 1;         //ready;
+
+        ready = insertBackTcb(ready,tmp);
+
+        print(fp,clock,core,tmp->id_task,tmp->state,mux);
     }
-    //blocked_tcb = NULL;
-//    printf("ho terminato isBlocked core%d\n", core);
 }
 
 //rimozione dell'istruzione in testa

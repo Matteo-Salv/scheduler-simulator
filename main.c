@@ -7,7 +7,7 @@
 #include "Header.h"
 
 //solo di debug
-/*
+
 void printdebug(tcb* tcbs){
     tcb* tmp_tcb;
     inst* tmp_inst;
@@ -22,7 +22,7 @@ void printdebug(tcb* tcbs){
         }
         tmp_tcb = tmp_tcb->next;
     }
-}*/
+}
 
 //metodo per l'inserimento dei tcb in coda
 tcb* insertBackTcb(tcb* tcbs, tcb* tmp_tcb){
@@ -174,7 +174,6 @@ void print_help(){
 
 //main
 int main(int argc, const char * argv[]) {
-    const char* program_name = argv[0]; //salvo il nome del programma
     const char* file_in;                //per salvare il nome del file di input
     int check = 0;                      //per il controllo del numero di paramentri inseriti
     int next_option = 0;                //variabile utilizzata nello switch del getopt
@@ -281,14 +280,15 @@ int main(int argc, const char * argv[]) {
 //        pthread_join(core1, NULL);
     }else{
         wait(&status_nopree);
-
+        ;
         //fork del preemptive
         pree = fork();
         if(pree < 0){
             perror("Forking dello scheduler preemptive fallito!");
             return(1);
         }else if(pree == 0){
-            pthread_t core2, core3;
+            pthread_t core2;
+            pthread_t core3;
             arg_pree pree;
 
             pree.out_pree = arg_sched.out_pree;
