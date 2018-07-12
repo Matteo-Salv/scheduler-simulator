@@ -6,8 +6,8 @@
 #include <unistd.h>
 #include "Header.h"
 
+/*
 //solo di debug
-
 void printdebug(tcb* tcbs){
     tcb* tmp_tcb;
     inst* tmp_inst;
@@ -23,6 +23,7 @@ void printdebug(tcb* tcbs){
         tmp_tcb = tmp_tcb->next;
     }
 }
+*/
 
 //metodo per l'inserimento dei tcb in coda
 tcb* insertBackTcb(tcb* tcbs, tcb* tmp_tcb){
@@ -271,13 +272,12 @@ int main(int argc, const char * argv[]) {
             perror("error during the creation of pthread 0!");
         }
 
-        /*
         if(pthread_create(&core1, NULL, scheduler_no_pree, &no_pree) != 0 ){
             perror("error during the creation of pthread 1!");
-        }*/
+        }
 
         pthread_join(core0, NULL);
-//        pthread_join(core1, NULL);
+        pthread_join(core1, NULL);
     }else{
         wait(&status_nopree);
         ;
@@ -315,9 +315,7 @@ int main(int argc, const char * argv[]) {
 
     
     //solo di debug
-//    printdebug(tcbs);
-
-    printf("##################SIMULATORE TERMINATO CON SUCCESSO#####################\n");
+    //printdebug(tcbs);
     return 0;
 }
 

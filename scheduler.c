@@ -141,6 +141,7 @@ void* scheduler_no_pree(void *params_no_pree){
 
     }while(ready != ready->next);       //finchè sono presenti tcb da mettere in run;
 
+    printf("TERMINE SCHEDULER NON PREEMPTIVE#####################\n");
     return NULL;
 }
 
